@@ -1,6 +1,6 @@
 """Golden-Hashes und Determinismus (Muster Toolgen: Hash statt Bild im Repo).
    python3 claude/tests/test_golden.py            # schnell: Spec-Hashes, Determinismus der Specs, Gegenbeweis
-   python3 claude/tests/test_golden.py --full     # zusätzlich Blätter (nach build_all.py --nur-xl --force, nie über den Inhalts-Cache) und Determinismus eines Blatts (Mac, numpy/scipy)
+   python3 claude/tests/test_golden.py --full     # zusätzlich Blätter (nach build_all.py --nur-xl --release = Cache + erzwungene Stichprobe, Release; oder --force = alles neu, Nachtlauf) und Determinismus eines Blatts (Mac, numpy/scipy)
    python3 claude/tests/test_golden.py --update [--specs|--sheets|--geo]   # golden.json aus den Dateien auf der Platte neu schreiben
 Golden = sha256 je claude/output/sheets/KXnn.spec.json und KXnn.dc.html in claude/tests/golden.json; die Visier-Serie (claude-0.6)
 unter vs_specs/vs_sheets (VSnn.spec.json, VSnn.dc.html); die Geo-Specs (claude-0.13, nicht im Repo, Release-Asset geo/) unter geo

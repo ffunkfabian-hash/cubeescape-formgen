@@ -37,6 +37,6 @@ def build(fid,force=False):
     open(f'{E3D}/final/{fn[:-8]}.html','w').write(page.replace('<script src="./support.js"></script>',''))
     json.dump(dict(V=V,num=d['num'],name=d['name'],nick=nick,de=de,en=en),open(f'{E3D}/reg/{fid}.prompt.json','w'),ensure_ascii=False)
     if key:sheetcache.store(key,page,dict(sheet=sid,prompt=dict(de=de,en=en)))
-    return ' '.join(map(str,(fn,len(page)//1024,'KB','gebaut'+('' if key else ' (ohne Cache)'))))
+    return ' '.join(map(str,(fn,len(page)//1024,'KB','gebaut'+('' if key else ' (ohne Cache)'),sheetcache.golden_state('weapon',sid,sheetcache.sha_bytes(page.encode('utf-8'))))))
 if __name__=='__main__':
     for fid in [a for a in sys.argv[1:] if not a.startswith('--')]:print(build(fid,sheetcache.forced()),flush=True)

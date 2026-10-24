@@ -25,7 +25,7 @@ def build(vid,force=False):
     import vsheet
     page=vsheet.sheet(vid);write(vid,page)
     if key:sheetcache.store(key,page,dict(sheet=vid))
-    return ' '.join(map(str,(f'{vid}.dc.html',len(page)//1024,'KB',f'{time.time()-t:.1f} s','gebaut'+('' if key else ' (ohne Cache)'))))
+    return ' '.join(map(str,(f'{vid}.dc.html',len(page)//1024,'KB',f'{time.time()-t:.1f} s','gebaut'+('' if key else ' (ohne Cache)'),sheetcache.golden_state('vs',vid,sheetcache.sha_bytes(page.encode('utf-8'))))))
 def main(ids):
     for vid in ids or vsmodels.IDS:print(build(vid,FORCE),flush=True)
 if __name__=='__main__':main([a for a in sys.argv[1:] if not a.startswith('--')])

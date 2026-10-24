@@ -11,8 +11,10 @@ Der Cache liegt außerhalb des Repos (~/Library/Caches/CubeEscape/concept-sheets
 umlegbar). Einträge werden atomar geschrieben (temporäre Datei, dann os.replace; das Blatt zuletzt). Trifft der Schlüssel und
 stimmen Größe und sha256 der Cache- und der Ausgabedatei, wird nichts geschrieben.
 
-Nie über den Cache: Release, `test_golden.py --full` (Cube-Escape-Entscheidung 15.10.2026: volle Regression nicht über den
-Cache), `build_all.py --force`, `CE_NO_CACHE=1`. test_sheetcache.py prüft, dass keine schreibende Funktion in CODE_PARTS fehlt.
+Nie über den Cache: die volle Regression `build_all.py --force` (Nachtlauf; Cube-Escape-Entscheidung 15.10.2026: volle Regression
+nicht über den Cache) und `CE_NO_CACHE=1`. Release (Entscheidung des Nutzers 24.10.2026): `build_all.py --nur-xl --release` = Cache
+plus erzwungene Stichprobe (geänderte Blätter seit dem letzten Tag claude-v*, 10 zufällige, alle Fehltreffer; Abweichung von golden.json
+bricht ab), danach `test_golden.py --full` über die Blätter auf der Platte. test_sheetcache.py prüft, dass keine schreibende Funktion in CODE_PARTS fehlt.
 """
 import ast,hashlib,json,os,sys,types
 
