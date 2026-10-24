@@ -1,10 +1,37 @@
-import math,io,base64
+import math,io,base64,os,contextlib
+from concurrent.futures import ThreadPoolExecutor
 import numpy as np
 from PIL import Image,ImageDraw
 WEBP_QUALITY=60   # war 92; Sichtprüfung 17.10.2026 (Blätter sind Release-Asset, Größe zählt)
 from scipy import ndimage
 import eng
 SS=2
+# WebP-Kodierung im Hintergrund (claude-0.19): sie ist ~70 % der Blattzeit (Profil KG02: 32,7 von 45,7 s, 21 Bilder, method=6) und
+# gibt den GIL frei. Innerhalb von deferred() liefert rasterview einen Platzhalter, die Kodierung läuft in Threads weiter, während
+# numpy das nächste Bild rechnet; resolve setzt am Blattende die Bilder ein. Gleiche Parameter, gleiche Bytes.
+_POOL=None;_PENDING=None
+WEBP_THREADS=int(os.environ.get('CE_WEBP_THREADS') or os.cpu_count() or 4)
+def _webp_b64(img):
+    buf=io.BytesIO();img.save(buf,'WEBP',quality=WEBP_QUALITY,method=6)
+    return base64.b64encode(buf.getvalue()).decode()
+def _image_b64(img):
+    if _PENDING is None:return _webp_b64(img)
+    tok=f'@@webp{len(_PENDING)}@@';_PENDING.append((tok,_POOL.submit(_webp_b64,img)));return tok
+@contextlib.contextmanager
+def deferred():
+    """with raster.deferred() as resolve: page=resolve(baue_blatt()) – Bilder des Blatts parallel kodieren (verschachtelt: äußerer gilt)."""
+    global _POOL,_PENDING
+    if _PENDING is not None:yield lambda page:page;return
+    if _POOL is None:_POOL=ThreadPoolExecutor(WEBP_THREADS,thread_name_prefix='webp')
+    _PENDING=[]
+    def resolve(page):
+        for tok,fu in _PENDING:
+            assert page.count(tok)<=1,tok
+            page=page.replace(tok,fu.result())
+        assert '@@webp' not in page
+        return page
+    try:yield resolve
+    finally:_PENDING=None
 def _hex(c):c=c.lstrip('#');return np.array([int(c[i:i+2],16) for i in (0,2,4)],np.float32)
 LAST={}
 def _glass_pass(glass,rgba,zb,yaw,pitch,center,T,w,h,s,tol):
@@ -41,7 +68,8 @@ def _glass_pass(glass,rgba,zb,yaw,pitch,center,T,w,h,s,tol):
             yy,xx=np.nonzero(hit);cx,cy=xx.mean(),yy.mean();k=np.argmin((xx-cx)**2+(yy-cy)**2)
             if P.get('label'):anch.setdefault(P['label'],(xx[k]/SS,yy[k]/SS))
     return anch
-def rasterview(m,yaw,pitch,center,W,H,scale,pad=0,ow=3.0,origin=None,texture=None,shadow=True,glass=None):
+def rasterview(m,yaw,pitch,center,W,H,scale,pad=0,ow=3.0,origin=None,texture=None,shadow=True,glass=None,image=True):
+    """image=False: nur raster.LAST (Anker, Boxen, Ursprung) rechnen, kein Bild (Vorlauf in xl.detail_view, claude-0.19)."""
     parts,allp=eng.render(m,yaw,pitch,center)
     xs=[p[0] for p in allp];ys=[p[1] for p in allp]
     mx=(min(xs)+max(xs))/2;my=(min(ys)+max(ys))/2
@@ -130,20 +158,25 @@ def rasterview(m,yaw,pitch,center,W,H,scale,pad=0,ow=3.0,origin=None,texture=Non
         if P.get('label'):labs.setdefault(P['label'],[]).append(pi)
     for lb,pis in labs.items():
         vis=np.isin(pb,pis)
-        if vis.any():  # sichtbare Pixel-Box je Bauteil (Bildpunkte, ohne SS)
-            yy,xx=np.nonzero(vis);boxes[lb]=(xx.min()/SS,yy.min()/SS,(xx.max()+1)/SS,(yy.max()+1)/SS)
-        mk=vis&~line
-        mk2=mk&~decm
-        if mk2.sum()>=20*SS*SS:mk=ndimage.binary_erosion(mk2,iterations=3) if ndimage.binary_erosion(mk2,iterations=3).sum()>0 else mk2
+        rws=np.flatnonzero(vis.any(1))
+        if not len(rws):continue   # nicht sichtbar: keine Box, kein Anker
+        cls=np.flatnonzero(vis.any(0))
+        boxes[lb]=(cls[0]/SS,rws[0]/SS,(cls[-1]+1)/SS,(rws[-1]+1)/SS)   # sichtbare Pixel-Box je Bauteil (Bildpunkte, ohne SS)
+        # Anker nur im Rahmen des Bauteils rechnen (claude-0.19): Rand 4 > 3 Erosionsschritte, außerhalb ist vis leer – gleiche Pixel wie im ganzen Bild
+        r0,c0=max(0,rws[0]-4),max(0,cls[0]-4);sl=(slice(r0,rws[-1]+5),slice(c0,cls[-1]+5))
+        mk=vis[sl]&~line[sl]
+        mk2=mk&~decm[sl]
+        if mk2.sum()>=20*SS*SS:
+            er=ndimage.binary_erosion(mk2,iterations=3);mk=er if er.sum()>0 else mk2
         if mk.sum()<20*SS*SS:continue
-        yy,xx=np.nonzero(mk);cxm,cym=xx.mean(),yy.mean()
+        yy,xx=np.nonzero(mk);yy=yy+r0;xx=xx+c0;cxm,cym=xx.mean(),yy.mean()
         k=np.argmin((xx-cxm)**2+(yy-cym)**2)
         anchors[lb]=(xx[k]/SS,yy[k]/SS)
     anchors.update(ganch)
     LAST.clear();LAST.update(anchors=anchors,boxes=boxes,origin=(mx,my))
+    if not image:return ''
     img=Image.fromarray(np.clip(rgba,0,255).astype(np.uint8),'RGBA').resize((W,H),Image.LANCZOS)
-    buf=io.BytesIO();img.save(buf,'WEBP',quality=WEBP_QUALITY,method=6)
-    b64=base64.b64encode(buf.getvalue()).decode()
+    b64=_image_b64(img)
     sh_y=(max(ys)-my)*scale+H/2+pad+14
     shd=f'<ellipse cx="{W/2}" cy="{sh_y:.0f}" rx="{(max(xs)-min(xs))*scale*0.45:.0f}" ry="{max(8,14*scale):.0f}" fill="#000" opacity="0.32"/>' if shadow else ''
     return shd+f'<image x="0" y="0" width="{W}" height="{H}" href="data:image/webp;base64,{b64}"/>'

@@ -21,13 +21,13 @@ def golden():
     with open(GOLDEN,encoding='utf-8') as f:return json.load(f)
 
 def run_hashes(cmd,seeds=('1','2')):
-    """Führt cmd einmal je PYTHONHASHSEED aus; liefert die Ausgaben (Determinismus = alle gleich)."""
-    outs=[]
-    for sd in seeds:
-        r=subprocess.run(cmd,capture_output=True,text=True,env={**os.environ,'PYTHONHASHSEED':sd})
-        if r.returncode:raise RuntimeError(r.stderr[-1500:])
-        outs.append(r.stdout)
-    return outs
+    """Führt cmd einmal je PYTHONHASHSEED aus, alle Seeds gleichzeitig (claude-0.19: Blattbau 2× parallel statt nacheinander);
+    liefert die Ausgaben in Seed-Reihenfolge (Determinismus = alle gleich)."""
+    ps=[subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env={**os.environ,'PYTHONHASHSEED':sd}) for sd in seeds]
+    res=[p.communicate() for p in ps]
+    for p,(_,err) in zip(ps,res):
+        if p.returncode:raise RuntimeError(err[-1500:])
+    return [out for out,_ in res]
 
 GEO_CMD=lambda s:[sys.executable,'-c',f'import sys;sys.path.insert(0,{GEN!r});import export_geo;sys.stdout.write(export_geo.dumps(export_geo.build({s!r})))']
 SPEC_CMD=lambda s:[sys.executable,'-c',f'import sys;sys.path.insert(0,{GEN!r});import export_spec;sys.stdout.write(export_spec.dumps(export_spec.build({s!r})))']
@@ -73,7 +73,7 @@ class Determinism(unittest.TestCase):
         """Gegenbeweis: Die Prüfung schlägt bei einer absichtlich nicht deterministischen Ausgabe an."""
         a,b=run_hashes(BAD_CMD);self.assertNotEqual(a,b)
         a,b=run_hashes(GOOD_CMD);self.assertEqual(a,b)
-    @unittest.skipUnless(FULL,'nur mit --full (Bildstufe, ~3 Min.)')
+    @unittest.skipUnless(FULL,'nur mit --full (Bildstufe, ~1 Min.)')
     def test_sheet_build_is_deterministic(self):
         a,b=run_hashes([sys.executable,os.path.join(HERE,'emit_sheet.py'),'KC01']);self.assertEqual(a,b)
         self.assertEqual(a.strip(),golden()['sheets']['KC01'])   # Bau im Speicher = Datei in golden.json

@@ -2,6 +2,11 @@
 
 Einträge je Erzeuger: `claude-…` (Ordner `claude/`), `codex-…` (Ordner `codex/`).
 
+## claude-0.19.0 „Afterburner“ – 2026-10-24
+
+- Release-Vollbau schneller, Ausgabe bytegleich (`golden.json` unverändert): WebP-Kodierung der Blattbilder (71 % der Blattzeit) läuft in Threads parallel zur numpy-Arbeit (`raster.deferred`), `build_all.py` baut alle 159 Blätter (Waffen + VS) in einem Prozess-Pool je Blatt (Prozesszahl nach RAM), Ankersuche im Bauteilrahmen, Determinismus-Seeds in `test_golden --full` parallel.
+- Gemessen (`--nur-xl --force`): vorher ≈ 45 min (92 von 150 Waffenblättern in 23,6 min), nachher 27:37 min; `test_golden --full` 34 s. Entscheidungsvorlage „Release über Cache + Stichprobe“ (~3–5 min) im Bericht [claude/docs/versions/0.19.md](claude/docs/versions/0.19.md).
+
 ## claude-0.17.2 – 2026-10-24
 
 - Golden-Blatt-Hashes KG02 und KG06 nach frischem Bau (`build_all.py --nur-xl --force`) neu; alle übrigen Blätter, Specs, Geo- und Visier-Hashes unverändert. KG02 ist bytegleich zum Blatt aus claude-v0.15.1 (der Schienenkanal `MT_Metal` aus 0.15.2 steht nur in Spec/Geo; der Wert von 0.15.2 ließ sich auf 3d23912 selbst nicht nachbauen).

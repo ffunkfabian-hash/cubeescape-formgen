@@ -25,19 +25,19 @@ KEY_VERSION=1   # bei Änderungen an Schlüsselbildung oder Eintragsformat erhö
 # Eine neue Funktion in einem dieser Module muss hier stehen oder in NOT_HASHED (mit Grund) – sonst schlägt der Test an.
 CODE_PARTS={
  'xl':['make_texture','swatch_svg','_bbox','detail_view','_callouts','DEFS','panel','prompts','pick_labels','_shift_part',
-       'compact_sight','_sight_view','sight_panel','_chip','skin_row','sheet','_profile_swatch','profile_strip','prompt_font','op_strip'],
+       'compact_sight','_sight_view','sight_panel','_chip','skin_row','sheet','_sheet','_profile_swatch','profile_strip','prompt_font','op_strip'],
  'xlroles':['_rgb','_hex','_lum','_sat','_mix','all_colors','color_roles','recolor','material_of','preferred_channel',
             'assign_channels','area3','area2','part_area','_hexu','channel_palettes'],
  'eng':['hx','lum','roundpoly','rect','circ','area','Model','tf','shadef','render','hull','svgview','svgview_vec','extent',
         'label','channel','copy_channels','model_origin','sight','split_sight'],
- 'raster':['_hex','_glass_pass','rasterview'],
+ 'raster':['_hex','_glass_pass','rasterview','_webp_b64','_image_b64','deferred'],
  'skins':['pick','_seg','_bar','_slant','_shrink','emblem','glyph_items','layout','_verts','bbox','side_face','inside',
           '_rect_hit','top_at','Frame','_unit','_blockers','place_rect','area_poly','resolve','_dist','base_slots','_resolve',
           '_trim','slot_colors','slots_used','apply','summary'],
  'skinraster':['_rgb','tones','_inpoly','_hsh','skin_texture'],
  'fontcss':[],
  'variants':['name','lib','title'],
- 'vsheet':['split','center_of','view','proj','recolor','T','reticle_svg','scene_svg','sheet'],
+ 'vsheet':['split','center_of','view','proj','recolor','T','reticle_svg','scene_svg','sheet','_sheet'],
  # vsmodels: ganzes Modul ('*'). Es liefert nicht nur das Modell (load), sondern auch Rahmen, Module, Tönungen, Farben, die
  # vsheet.sheet für alle Varianten zeichnet und xl._sight_view (TINTS) liest.
  'vsmodels':'*',

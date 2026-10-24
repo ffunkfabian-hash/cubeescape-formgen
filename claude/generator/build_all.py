@@ -5,11 +5,39 @@
    python generator/build_all.py VS         # nur die Visier-Serie VS01–VS09 (mit Buchstaben: diese Varianten und VS)
    python generator/build_all.py --force    # ohne Inhalts-Cache (sheetcache.py): alle Blätter neu; Pflicht vor Release und für test_golden --full
 Ohne --force baut build_xl.py/build_vs.py nur Blätter, deren Schlüssel (Modell, Palette/Skin, Quelltext der schreibenden Funktionen) sich geändert hat.
+Blätter (KXnn und VSnn) baut seit claude-0.19 ein Prozess-Pool je Blatt (vorher ein Prozess je Variante, VS seriell danach):
+Prozesszahl = Kerne, begrenzt durch den Speicher (SHEET_GB je Prozess); CE_SHEET_JOBS=n setzt sie fest. Die WebP-Bilder eines
+Blatts kodiert raster.deferred in Threads (CE_WEBP_THREADS).
 """
-import subprocess,sys,os,shutil
-from concurrent.futures import ThreadPoolExecutor
+import subprocess,sys,os,shutil,time,traceback
+from concurrent.futures import ThreadPoolExecutor,ProcessPoolExecutor,as_completed
+import multiprocessing as mp
 from cepaths import E3D,ROOT,OUT,PROMPTS
 import variants,sheetcache
+SHEET_GB=3.5   # Spitzenspeicher eines Blattprozesses (Messung KG02: 2,95 GB, Isometrie 5400×3600 Bildpunkte) plus Reserve
+def sheet_jobs():
+    if os.environ.get('CE_SHEET_JOBS'):return max(1,int(os.environ['CE_SHEET_JOBS']))
+    try:mem=os.sysconf('SC_PAGE_SIZE')*os.sysconf('SC_PHYS_PAGES')
+    except (ValueError,OSError):mem=16<<30
+    return max(1,min(os.cpu_count() or 4,int(mem/(SHEET_GB*(1<<30)))))
+def _sheet_job(kind,sid,force):
+    """Aufgabe im Prozess-Pool: ein Blatt bauen (build_xl.build bzw. build_vs.build); liefert Logzeile und Sekunden."""
+    t=time.time()
+    if kind=='vs':import build_vs as b
+    else:import build_xl as b
+    return b.build(sid,force),time.time()-t
+def run_sheets(jobs,force):
+    """Baut alle Blätter (kind, id) im Prozess-Pool; Ausgabe je Blatt, sobald es fertig ist. Liefert die Zahl der Fehler."""
+    n=min(sheet_jobs(),len(jobs));t0=time.time();bad=0
+    print(f'Blätter: {len(jobs)} in {n} Prozessen',flush=True)
+    with ProcessPoolExecutor(n,mp_context=mp.get_context('spawn')) as ex:
+        fs={ex.submit(_sheet_job,k,i,force):i for k,i in jobs}
+        for f in as_completed(fs):
+            try:line,dt=f.result();print(f'OK  {line}  {dt:.1f} s',flush=True)
+            except Exception as e:
+                bad+=1;print(f'FEHLER {fs[f]}: {e!r}',flush=True);traceback.print_exception(e)
+    print(f'Blätter fertig in {time.time()-t0:.0f} s',flush=True)
+    return bad
 os.chdir(E3D)
 args=sys.argv[1:]
 nur_xl='--nur-xl' in args
@@ -44,12 +72,15 @@ def run_seq(cmds):
         for ln in r.stdout.splitlines():
             if 'Cache' in ln or 'gebaut' in ln:print('    '+ln,flush=True)   # Treffer/Neubau je Blatt (sheetcache)
         if r.returncode:print(r.stderr[-2000:])
-if not nur_xl and V:
-    with ThreadPoolExecutor(len(V)) as ex:list(ex.map(run_seq,[jobs[v] for v in V]))
-if V:
-    with ThreadPoolExecutor(len(V)) as ex:list(ex.map(run_seq,[[P('build_xl.py',*fid[v],*FORCE)] for v in V]))
-if vs:run_seq([P('build_vs.py',*FORCE)])   # Visier-Serie VS01–VS09 (claude-0.6), eigene Modelle (vsmodels.py)
-run_seq([P('mkdoc.py')])
-if os.path.exists('Waffen-Prompts.md'):shutil.copy('Waffen-Prompts.md',os.path.join(PROMPTS,'Waffen-Prompts.md'))
-run_seq([P('make_viewer.py')])   # Viewer claude/output/index.html (Regel in CLAUDE.md)
-print('fertig')
+def main():   # Pool-Prozesse (spawn) laden dieses Skript als __mp_main__: dort nur Definitionen, kein Lauf
+    if not nur_xl and V:
+        with ThreadPoolExecutor(len(V)) as ex:list(ex.map(run_seq,[jobs[v] for v in V]))
+    import vsmodels
+    # Waffenblätter und Visier-Serie VS01–VS09 (claude-0.6, eigene Modelle vsmodels.py) in einem Pool
+    bad=run_sheets([('xl',f) for v in V for f in fid[v]]+([('vs',i) for i in vsmodels.IDS] if vs else []),bool(FORCE)) if V or vs else 0
+    run_seq([P('mkdoc.py')])
+    if os.path.exists('Waffen-Prompts.md'):shutil.copy('Waffen-Prompts.md',os.path.join(PROMPTS,'Waffen-Prompts.md'))
+    run_seq([P('make_viewer.py')])   # Viewer claude/output/index.html (Regel in CLAUDE.md)
+    print('fertig' if not bad else f'fertig mit {bad} Fehler(n)')
+    sys.exit(1 if bad else 0)
+if __name__=='__main__':main()

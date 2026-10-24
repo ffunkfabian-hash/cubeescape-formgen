@@ -101,9 +101,9 @@ def hull(pts):
         while len(up)>=2 and cr(up[-2],up[-1],p)<=0:up.pop()
         up.append(p)
     return lo[:-1]+up[:-1]
-def svgview(m,yaw,pitch,center,W,H,scale,pad=0,ow=3.0,origin=None,texture=None,shadow=True):
+def svgview(m,yaw,pitch,center,W,H,scale,pad=0,ow=3.0,origin=None,texture=None,shadow=True,image=True):
     import raster
-    return raster.rasterview(m,yaw,pitch,center,W,H,scale,pad,ow,origin=origin,texture=texture,shadow=shadow)
+    return raster.rasterview(m,yaw,pitch,center,W,H,scale,pad,ow,origin=origin,texture=texture,shadow=shadow,image=image)
 def svgview_vec(m,yaw,pitch,center,W,H,scale,pad=0,ow=3.0):
     parts,allp=render(m,yaw,pitch,center)
     xs=[p[0] for p in allp];ys=[p[1] for p in allp]
