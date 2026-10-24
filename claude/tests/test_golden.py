@@ -23,8 +23,13 @@ def golden():
 def run_hashes(cmd,seeds=('1','2')):
     """Führt cmd einmal je PYTHONHASHSEED aus, alle Seeds gleichzeitig (claude-0.19: Blattbau 2× parallel statt nacheinander);
     liefert die Ausgaben in Seed-Reihenfolge (Determinismus = alle gleich)."""
-    ps=[subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env={**os.environ,'PYTHONHASHSEED':sd}) for sd in seeds]
-    res=[p.communicate() for p in ps]
+    ps=[]
+    try:
+        for sd in seeds:ps.append(subprocess.Popen(cmd,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env={**os.environ,'PYTHONHASHSEED':sd}))
+        res=[p.communicate() for p in ps]
+    finally:   # Start- oder Lesefehler: schon gestartete Kindprozesse nicht verwaist lassen
+        for p in ps:
+            if p.poll() is None:p.kill();p.wait()
     for p,(_,err) in zip(ps,res):
         if p.returncode:raise RuntimeError(err[-1500:])
     return [out for out,_ in res]

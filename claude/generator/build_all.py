@@ -15,6 +15,8 @@ import multiprocessing as mp
 from cepaths import E3D,ROOT,OUT,PROMPTS
 import variants,sheetcache
 SHEET_GB=3.5   # Spitzenspeicher eines Blattprozesses (Messung KG02: 2,95 GB, Isometrie 5400×3600 Bildpunkte) plus Reserve
+# Bewusst am physischen RAM (feste Obergrenze, 16 GB → 4 Prozesse), nicht am freien: der schwankt mit anderen Sitzungen; bei knappem
+# Speicher CE_SHEET_JOBS kleiner setzen. Gemessen 24.10.2026: 4 Prozesse, Swap blieb bei ~7–8 GB (vorher schon belegt).
 def sheet_jobs():
     if os.environ.get('CE_SHEET_JOBS'):return max(1,int(os.environ['CE_SHEET_JOBS']))
     try:mem=os.sysconf('SC_PAGE_SIZE')*os.sysconf('SC_PHYS_PAGES')
