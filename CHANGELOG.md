@@ -2,6 +2,12 @@
 
 Einträge je Erzeuger: `claude-…` (Ordner `claude/`), `codex-…` (Ordner `codex/`).
 
+## claude-0.17.2 – 2026-10-24
+
+- Golden-Blatt-Hashes KG02 und KG06 nach frischem Bau (`build_all.py --nur-xl --force`) neu; alle übrigen Blätter, Specs, Geo- und Visier-Hashes unverändert. KG02 ist bytegleich zum Blatt aus claude-v0.15.1 (der Schienenkanal `MT_Metal` aus 0.15.2 steht nur in Spec/Geo; der Wert von 0.15.2 ließ sich auf 3d23912 selbst nicht nachbauen).
+- KG06 am Bild geprüft: Beschriftung „Vordergriff“, dadurch Material `rubber` (Gummi-Muster creme, Vordergriff im Hauptskin creme statt orange wie die übrigen Griffe), Prompt-Teileliste mit Vordergriff – genau die Änderung aus 0.16.2.
+- `claude/prompts/Waffen-Prompts.md` von `mkdoc.py` nachgezogen: KG01 mit Kimme und Korn statt VS01 (Stand 0.17.1).
+
 ## claude-0.17.1 – 2026-10-24
 
 - Patch KG01 (Pistole): Reflexvisier VS01 (p13–p26) und die angefügte Visierschiene (p12) entfallen; Kimme (Sockel, Kerbe zwischen zwei Pfosten) und Korn (Keil) sitzen fest auf dem Schlitten p06 und laufen im Bewegungsteil `slide` mit (Entscheidung des Nutzers 24.10.2026, Toolgen Sidearm 0.27). p00–p11 bleiben, p12–p15 sind Kimme/Korn.
