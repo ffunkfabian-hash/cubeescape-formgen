@@ -88,7 +88,7 @@
         "python3",
         "claude/generator/build_all.py",
         "--nur-xl",
-        "--force"
+        "--release"
       ],
       [
         "python3",

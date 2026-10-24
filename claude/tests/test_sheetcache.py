@@ -122,4 +122,21 @@ class Store(unittest.TestCase):
         try:self.assertTrue(SC.disabled([]))
         finally:del os.environ['CE_NO_CACHE']
 
+class ReleasePlan(unittest.TestCase):
+    """build_all.py --release (Entscheidung 24.10.2026): seit dem letzten Release geänderte Blätter immer frisch, dazu RELEASE_SAMPLE
+    zufällige; gleicher Seed = gleiche Auswahl; ohne Release-Tag alles frisch."""
+    def setUp(self):
+        import build_all;self.B=build_all;self.orig=build_all.changed_since_release
+        self.jobs=[('xl',f'g{n:02d}') for n in range(1,26)]+[('xl','v01'),('vs','VS01'),('vs','VS02')]
+    def tearDown(self):self.B.changed_since_release=self.orig
+    def test_changed_plus_sample(self):
+        self.B.changed_since_release=lambda:({'KG02','KX99'},'claude-v0.0')
+        a=self.B.release_plan(self.jobs,7);b=self.B.release_plan(self.jobs,7)
+        self.assertEqual(a,b);self.assertIn('KG02',a);self.assertNotIn('KX99',a)
+        self.assertEqual(len(a),1+self.B.RELEASE_SAMPLE)
+        self.assertTrue(a<={self.B.sheet_id(k,i) for k,i in self.jobs});self.assertEqual(self.B.sheet_id('xl','v01'),'KC01')
+    def test_without_tag_everything(self):
+        self.B.changed_since_release=lambda:(None,'')
+        self.assertEqual(len(self.B.release_plan(self.jobs,7)),len(self.jobs))
+
 if __name__=='__main__':unittest.main()

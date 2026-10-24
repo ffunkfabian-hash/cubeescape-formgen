@@ -148,7 +148,7 @@ def detail_view(m,center,W,H,ow=3.0):
     box=[min(p[0] for p in pr),min(p[1] for p in pr),max(p[0] for p in pr),max(p[1] for p in pr)]
     o=((box[0]+box[2])/2,(box[1]+box[3])/2)
     s0=min((W-2*SIDE)/max(box[2]-box[0],1),(H-TOP-BOT)/max(box[3]-box[1],1))
-    svgview(m,yaw,pitch,center,W,H,s0,ow=ow,origin=o,shadow=False)  # Vorlauf: was davon ist sichtbar?
+    svgview(m,yaw,pitch,center,W,H,s0,ow=ow,origin=o,shadow=False,image=False)  # Vorlauf: was davon ist sichtbar? (nur raster.LAST, kein Bild)
     vis=raster.LAST.get('boxes',{})
     vb=[vis[n] for n in names if n in vis]
     if vb:
@@ -404,6 +404,11 @@ def skin_row(rsl,skinned,full,center,cw,ch,fid,name):
     return out
 
 def sheet(d,variant_letter):
+    """Konzeptblatt XL -> (page, Prompt de, Prompt en); die Bilder kodiert raster.deferred parallel (claude-0.19)."""
+    with raster.deferred() as resolve:
+        page,de,en=_sheet(d,variant_letter)
+        return resolve(page),de,en
+def _sheet(d,variant_letter):
     full=d['m'];center=d['center'];fid='x'+d['fid'];col=d['col']
     m,ms=split_sight(full)
     iron=any(P.get('iron') for P in full.parts)   # feste Kimme/Korn auf dem Schlitten (claude-0.17.1, KG01): auf der Waffe gezeichnet, kein Wechselvisier

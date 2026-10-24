@@ -98,6 +98,9 @@ def scene_svg(w,h,seed):
 
 # ---------------------------------------------------------------- Blatt
 def sheet(vid):
+    """Blatt der Visier-Serie; die Bilder kodiert raster.deferred parallel (claude-0.19)."""
+    with raster.deferred() as resolve:return resolve(_sheet(vid))
+def _sheet(vid):
     d=V.load(vid);S=d['S'];info=d['info'];geo=d['geo'];ly=geo['line_y'];win=geo['window']
     spec=export_sight.build(vid)
     tint=info['tint'];hud=info['hud'];acc=V.ORANGE;fid='v'+vid.lower()
