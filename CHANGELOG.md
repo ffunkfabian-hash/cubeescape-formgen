@@ -2,6 +2,10 @@
 
 Einträge je Erzeuger: `claude-…` (Ordner `claude/`), `codex-…` (Ordner `codex/`).
 
+## Patch doku-panorama (ohne Versionsänderung)
+
+- `README.md`: Agent-Tools-Angabe auf den gepinnten Stand verwiesen statt „0.20.0“, Status „ruht“ ergänzt; `AGENTS.md`/`CLAUDE.md`: globale Regeln in Nexogen statt `cubeescape-rules`. Nur Markdown.
+
 ## claude-0.19.0 „Afterburner“ – 2026-10-24
 
 - Release-Vollbau schneller, Ausgabe bytegleich (`golden.json` unverändert): WebP-Kodierung der Blattbilder (71 % der Blattzeit) läuft in Threads parallel zur numpy-Arbeit (`raster.deferred`), `build_all.py` baut alle 159 Blätter (Waffen + VS) in einem Prozess-Pool je Blatt (Prozesszahl nach RAM), Ankersuche im Bauteilrahmen, Determinismus-Seeds in `test_golden --full` parallel.
