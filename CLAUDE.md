@@ -1,6 +1,6 @@
 # Regeln für Claude in diesem Repository
 
-Zuerst gelten die globalen Regeln aus `ffunkfabian-hash/cubeescape-rules` (lokal `~/.claude/CLAUDE.md` bzw.
+Zuerst gelten die globalen Regeln aus `ffunkfabian-hash/cubeescape-nexogen` (lokal `~/.claude/CLAUDE.md` bzw.
 `~/.codex/AGENTS.md`). Ergänzend für dieses Repo:
 
 - Claude schreibt ausschließlich unter `claude/` (Pipeline, Modelle, Konzeptblätter, Prompts).

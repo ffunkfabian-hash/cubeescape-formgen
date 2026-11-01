@@ -2,7 +2,9 @@
 
 Zentraler Repo-Einstieg: [Nexogen](https://github.com/ffunkfabian-hash/cubeescape-nexogen) – Repo-Links, Zuständigkeiten, Abhängigkeiten und Live-Status über die Status-CLI im Nexogen-Repo. Globale Regeln dort, Fachwissen und Prüfbelege hier.
 
-Gemeinsame Werkzeuge: Agent Tools **0.20.0 „Lodestar“**, ohne eingebettete Kopie (seit claude-0.16.0): `./ce` ist der Lader, `.ce-repo.json` › `tools_version` pinnt den Commit; `./ce tools where` zeigt den Stand. Der Modellstand bleibt claude-0.15. [Bericht](claude/docs/versions/0.16.md).
+Gemeinsame Werkzeuge: Agent Tools (gepinnter Stand: `.ce-repo.json` › `tools_version`, derzeit 0.22.0), ohne eingebettete Kopie (seit claude-0.16.0): `./ce` ist der Lader; `./ce tools where` zeigt den Stand. Der Modellstand bleibt claude-0.15. [Bericht](claude/docs/versions/0.16.md).
+
+**Status:** ruht – Formgen v2 entsteht nach dem Ausbau auf Basis von Critic und BALLON (Entscheidung des Nutzers 30.10.2026, Nexogen `repos.json`); der Bestand bleibt lesbar und baubar.
 
 Waffen-Konzeptblätter für **Cube Escape**: Low-Poly-Sci-Fi, technisch konsistent, als Vorlage für 3D-Modellierung
 (Mensch oder KI-Agent). Jede Waffe ist als kleines 3D-Modell in Python beschrieben. Alle Ansichten werden aus genau
